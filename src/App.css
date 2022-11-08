@@ -21,3 +21,23 @@
   height: 40px;
   border: 1px solid black;
 }
+
+.start{
+  background-color: green;
+}
+.path{
+  background-color: greenyellow;
+}
+.finish{
+  background-color: crimson;
+  /* will make this a checkered flag? */
+}
+.visited{
+  background-color: gray;
+}
+.empty{
+  background-color: white;
+}
+.wall{
+  background-color: black;
+}
