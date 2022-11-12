@@ -12,28 +12,24 @@ const Grid = ({rows, columns}) => {
   const [totalClicked, setTotalClicked] = useState(0)
   const [startPosition, setStartPosition] = useState([])
   const [finishPosition, setFinishPosition] = useState([])
-  const [activeButton, setActiveButton] = useState('')
+  const [activeButton, setActiveButton] = useState('empty')
+  const [errorMessage, setErrorMessage] = useState('')
+
 
   const handleClick = (r,c,activeButton) =>{
     const newGrid = [...dataGrid]
-
-   
     const pos = JSON.stringify([r,c])
     if (JSON.stringify(startPosition) === pos || JSON.stringify(finishPosition) === pos){
       return
     }
-
-
     if (activeButton === START){
       if (startPosition.length) newGrid[startPosition[0]][startPosition[1]] = EMPTY
       setStartPosition([r,c])
     } 
-    
     else if (activeButton === FINISH){
       if (finishPosition.length) newGrid[finishPosition[0]][finishPosition[1]] = EMPTY
       setFinishPosition([r,c])
     }
-
     else if (activeButton === WALL){
       //do something, not sure if needed. Logic can be elsewhere
     }
@@ -49,61 +45,88 @@ const Grid = ({rows, columns}) => {
     const newGrid = []
     
     for (let c = 0; c < columns; c ++){
-      const newRow = []
+      const newCol = []
       for (let r = 0; r < rows; r++){
         const square = <Square 
           key={r.toString()+ ','+c.toString()} 
           state={dataGrid[r][c]} 
           handleClick={()=>handleClick(r,c,activeButton)}
         />
-        newRow.push(square)
+        newCol.push(square)
       }
-      newGrid.push(<div className="row" key={c}>{newRow}</div>)
+      newGrid.push(<div className="column" key={c}>{newCol}</div>)
     }
     return newGrid
   }
 
-  const traverseGrid = () => {
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
-    let count = 0
-    for(let r = 0; r < dataGrid.length; r++){
-      for(let c = 0; c < dataGrid[0].length; c++){
-        if (dataGrid[r][c] === 15) count += 1
+  function animateGraph(row,col,time){
+
+
+  }
+
+  async function traverseGrid(){
+    // setErrorMessage('')
+    // if (!startPosition.length || !finishPosition.length){
+    //   setErrorMessage('Must have starting and finish position')
+    // }
+    let newGrid = [...dataGrid]
+    let delay = 0
+    for (let row = 0; row < 3; row++){
+      for (let col = 0; col < 3; col++){
+        newGrid[row][col] = WALL
+        console.log(row, col, 'delayed')
+        await sleep(1500)
+        setDataGrid(newGrid)
+        console.log(dataGrid)
+        delay += 1
       }
     }
-    setTotalClicked(count)
-  }
-
-  const addItemToGrid = (item) => {
-    if (item === START) {
-      setActiveButton(START)
-    }
-    else if (item === FINISH) {
-      setActiveButton(FINISH)
-    }
-    else if (item === WALL){
-      setActiveButton(WALL)
-    }
-    // if (item === 'wall') return
 
   }
 
+  // const addItemToGrid = (item) => {
+  //   if (item === START) {
+  //     setActiveButton(START)
+  //   }
+  //   else if (item === FINISH) {
+  //     setActiveButton(FINISH)
+  //   }
+  //   else if (item === WALL){
+  //     setActiveButton(WALL)
+  //   }
+  //   // if (item === 'wall') return
+
+  // }
 
 
 
+
+
+  const pickOrMove = (placement) => {
+    if (placement === START && startPosition.length) return "Move"
+    else if (placement === FINISH && finishPosition.length) return "Move"
+    return 'Pick'
+  }
 
   const disGrid = createGrid()
+  const srtBtn = pickOrMove(START)
+  const finBtn = pickOrMove(FINISH)
   return(
     <>
       <h2>{activeButton}, Start: {startPosition}, Finish; {finishPosition}</h2>
-      <button onClick={() => addItemToGrid(START)}>Pick Start</button>
-      <button onClick={() => addItemToGrid(FINISH)}>Pick Finish</button>
-      <button onClick={() => addItemToGrid(WALL)}>Add Wall</button>
+      <button onClick={() => setActiveButton(START)}>{srtBtn} Start Position</button>
+      <button onClick={() => setActiveButton(FINISH)}>{finBtn} Finish Position</button>
+      <button onClick={() => setActiveButton(WALL)}>Add Wall</button>
       <button onClick={() => setActiveButton(EMPTY)}>Remove Wall</button>
 
       <div className="grid">{disGrid}</div>
       <h2>Total Clicked: {totalClicked}</h2>
       <button onClick={()=>traverseGrid()}>Traverse</button>
+      <h2>Error Message: {errorMessage}</h2>
     </>
   )
 }
