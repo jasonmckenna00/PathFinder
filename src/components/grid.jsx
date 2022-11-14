@@ -14,7 +14,7 @@ const Grid = ({rows, columns}) => {
   const [finishPosition, setFinishPosition] = useState([])
   const [activeButton, setActiveButton] = useState('empty')
   const [errorMessage, setErrorMessage] = useState('')
-
+  const [discoveredPath, setDiscoveredPath] = useState([])
 
   const handleClick = (r,c,activeButton) =>{
     const newGrid = [...dataGrid]
@@ -65,7 +65,69 @@ const Grid = ({rows, columns}) => {
 
   function animateGraph(row,col,time){
 
+    // for (let row = 0; row < 3; row++){
+    //   for (let col = 0; col < 3; col++){
+    //     newGrid[row][col] = WALL
+    //     console.log(row, col, 'delayed')
+    //     await sleep(1500)
+    //     setDataGrid(newGrid)
+    //     console.log(dataGrid)
+    //     delay += 1
+    //   }
+    // }
+  }
 
+  function pathExists(start, finish, neighbors){
+    const visited = new Set()
+    const queue = [[start[0], start[1],[] ,0]]
+    const fin = finish[0] + ',' + finish[1]
+    
+    const neighborMap = createNeighborMap(neighbors)
+    while(queue.length){
+      const [row, col, path] = queue.shift()
+      const pos = row + ',' + col
+      if (pos === fin) return true
+
+      for (let neighbor of neighbors){
+        const [r,c] = neighbor
+        const neighborPos = r + ',' + c
+        const newRow = row + r
+        const newCol = col + c
+        const inBoundsRow = newRow >= 0 && newRow < dataGrid.length
+        const inBoundsCol = newCol >= 0 && newCol < dataGrid[0].length
+        const newPos = newRow + ',' + newCol
+        if (!(inBoundsCol && inBoundsRow) || visited.has(newPos)) continue
+        visited.add(newPos)
+        if (dataGrid[newRow][newCol] === WALL) continue
+        if (newPos === fin){
+          setDiscoveredPath(path)
+          return true
+        }
+        
+        queue.push([newRow, newCol,[...path,neighborMap.indexOf(neighborPos)]])
+      }
+    }
+    console.log('cant find, visited: ', visited.size, 'nodes')
+    return false
+  }
+
+  function createNeighborMap(neighbors){
+    const positions = []
+    for (let neighbor of neighbors){
+      positions.push(neighbor[0] + ',' + neighbor[1])
+    }
+    return positions
+  }
+
+  function recreatePath(neighbors, pathCodes){
+    const path = []
+    let currentPosition = startPosition
+    for (let code of pathCodes){
+      const [row, col] = neighbors[code]
+      const nextPos = [currentPosition[0] + row, currentPosition[1] + col]
+      path.push([nextPos])
+    }
+    return path
   }
 
   async function traverseGrid(){
@@ -73,19 +135,20 @@ const Grid = ({rows, columns}) => {
     // if (!startPosition.length || !finishPosition.length){
     //   setErrorMessage('Must have starting and finish position')
     // }
-    let newGrid = [...dataGrid]
-    let delay = 0
-    for (let row = 0; row < 3; row++){
-      for (let col = 0; col < 3; col++){
-        newGrid[row][col] = WALL
-        console.log(row, col, 'delayed')
-        await sleep(1500)
-        setDataGrid(newGrid)
-        console.log(dataGrid)
-        delay += 1
-      }
-    }
+    // let newGrid = [...dataGrid]
+    // let delay = 0
+    const neighbors = [
+      [-1,0], 
+     [0,-1],  [0,1],
+     [1,0], 
+   ]
+    const visited = new Set()
+    const pathExist = pathExists(startPosition, finishPosition, neighbors)
+    if (pathExist){
+      const path = recreatePath(neighbors,discoveredPath)
+      console.log(path)
 
+    }
   }
 
   // const addItemToGrid = (item) => {
@@ -125,6 +188,7 @@ const Grid = ({rows, columns}) => {
 
       <div className="grid">{disGrid}</div>
       <h2>Total Clicked: {totalClicked}</h2>
+      {discoveredPath.length && <h2>Path Length: {discoveredPath.length + 1}</h2>}
       <button onClick={()=>traverseGrid()}>Traverse</button>
       <h2>Error Message: {errorMessage}</h2>
     </>
